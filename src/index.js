@@ -18,6 +18,18 @@ const setupDatabase = con => {
         )', log('recordsテーブルを作成')
     )
 }
+const setupExpress = (express, con) => {
+    const path = require('path');
+    const http = require('http')
+    express.set('views', path.join(__dirname, 'views'))
+    express.set('view engine', 'pug')
+
+    express.use('/api', require('./routes/api')(con))
+
+    const server = http.createServer(express)
+    const port = process.env.PORT || 3000
+    server.listen(port)
+}
 const main = () => {
     const express = require('express')
     const mysql = require('mysql2')
@@ -26,5 +38,8 @@ const main = () => {
     const con = mysql.createConnection(config.get("db"))
     connectToDatabase(con)
     setupDatabase(con)
+    setupExpress(app, con)
+
+    module.exports = con
 }
 main()
