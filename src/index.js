@@ -4,17 +4,20 @@ const setupDatabase = con => {
     con.query('create database typing', log('データベースを作成'))
     con.query(
         'create table players (\
-           id varchar(32) primary key,\
-           name varchar(32) not null\
+           id varchar(32) not null,\
+           name varchar(32) not null,\
+           primary key (id)\
         )', log('playersテーブルを作成')
     )
     con.query(
         'create table records (\
-           player_id varchar(32) primary key,\
+           player_id varchar(32) not null,\
            kps double not null,\
            miss int not null,\
            accuracy double not null,\
-           score int not null\
+           score int not null,\
+           primary key (player_id),\
+           foreign key (player_id) references players(id)\
         )', log('recordsテーブルを作成')
     )
 }
