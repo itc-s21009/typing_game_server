@@ -25,9 +25,12 @@ const setupDatabase = con => {
 const setupExpress = (express, con) => {
     const path = require('path');
     const http = require('http')
+    const cors = require('cors')
     const bodyParser = require('body-parser')
     express.set('views', path.join(__dirname, 'views'))
     express.set('view engine', 'pug')
+
+    express.use(cors({origin: "http://localhost:8080"}))
 
     express.use(bodyParser.urlencoded({
         extended: true
