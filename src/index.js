@@ -16,6 +16,7 @@ const setupDatabase = con => {
            miss int not null,\
            accuracy double not null,\
            score int not null,\
+           updated_at datetime default current_timestamp on update current_timestamp,\
            primary key (player_id),\
            foreign key (player_id) references players(id)\
         )', log('recordsテーブルを作成')
