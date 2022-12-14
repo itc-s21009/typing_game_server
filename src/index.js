@@ -21,8 +21,14 @@ const setupDatabase = con => {
 const setupExpress = (express, con) => {
     const path = require('path');
     const http = require('http')
+    const bodyParser = require('body-parser')
     express.set('views', path.join(__dirname, 'views'))
     express.set('view engine', 'pug')
+
+    express.use(bodyParser.urlencoded({
+        extended: true
+    }))
+    express.use(bodyParser.json())
 
     express.use('/api', require('./routes/api')(con))
 

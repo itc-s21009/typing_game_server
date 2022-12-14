@@ -7,7 +7,7 @@ const getRanking = (con) => (req, res) =>
         on p.id = r.player_id\
         order by score desc'
     )
-const getId = (con) => (req, res) => {
+const getRecordById = (con) => (req, res) => {
     execQuery(con, res, req.params.id)(
         'select p.name, r.kps, r.miss, r.accuracy, r.score\
         from records as r\
@@ -16,13 +16,21 @@ const getId = (con) => (req, res) => {
         where player_id = ?'
     )
 }
+const postRecord = (con) => (req, res) => {
+    const {player_id, kps, miss, accuracy, score} = req.body
+    execQuery(con, res, [player_id, kps, miss, accuracy, score])(
+        'insert ignore into records values (?, ?, ?, ?, ?)'
+    )
+}
 
 
 const createRouter = (con) => {
     const express = require('express')
     const router = express.Router()
     router.get('/ranking', getRanking(con))
-    router.get('/:id', getId(con))
+    router.get('/records/:id', getRecordById(con))
+    router.post('/records/register', postRecord(con))
+
     return router
 }
 module.exports = createRouter
