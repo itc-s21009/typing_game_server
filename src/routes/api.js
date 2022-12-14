@@ -1,7 +1,7 @@
 const execQuery = (con, res, values) => sql => con.query(sql, values, (e, results) => e ? res.json({code: e.code}) : res.json(results))
 const getRanking = (con) => (req, res) =>
     execQuery(con, res)(
-        'select p.name, r.kps, r.miss, r.accuracy, r.score\
+        'select p.name, r.kps, r.miss, r.accuracy, r.score, r.updated_at\
         from records as r\
         join players as p\
         on p.id = r.player_id\
@@ -9,7 +9,7 @@ const getRanking = (con) => (req, res) =>
     )
 const getRecordById = (con) => (req, res) => {
     execQuery(con, res, req.params.id)(
-        'select p.name, r.kps, r.miss, r.accuracy, r.score\
+        'select p.name, r.kps, r.miss, r.accuracy, r.score, r.updated_at\
         from records as r\
         join players as p\
         on p.id = r.player_id\
