@@ -22,6 +22,12 @@ const postRecord = (con) => (req, res) => {
         'insert ignore into records values (?, ?, ?, ?, ?)'
     )
 }
+const postPlayer = (con) => (req, res) => {
+    const {id, name} = req.body
+    execQuery(con, res, [id, name])(
+        'insert ignore into players values (?, ?)'
+    )
+}
 
 
 const createRouter = (con) => {
@@ -30,6 +36,7 @@ const createRouter = (con) => {
     router.get('/ranking', getRanking(con))
     router.get('/records/:id', getRecordById(con))
     router.post('/records/register', postRecord(con))
+    router.post('/players/register', postPlayer(con))
 
     return router
 }
