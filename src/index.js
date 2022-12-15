@@ -3,23 +3,22 @@ const setupDatabase = con => {
     const log = msg => err => err ? {} : console.log(msg)
     con.query('create database typing', log('データベースを作成'))
     con.query(
-        'create table players (\
-           id varchar(32) not null,\
-           name varchar(32) not null,\
-           primary key (id)\
-        )', log('playersテーブルを作成')
+        'create table records (\
+            id varchar(256) not null primary key,\
+            name varchar(16) not null,\
+            kps decimal(4, 1) unsigned not null,\
+            miss int unsigned not null,\
+            accuracy decimal(4, 1) unsigned not null check(accuracy <= 100.0),\
+            score int unsigned not null,\
+            updated_at datetime default current_timestamp on update current_timestamp\
+        )', log('recordsテーブルを作成')
     )
     con.query(
-        'create table records (\
-           player_id varchar(32) not null,\
-           kps double not null,\
-           miss int not null,\
-           accuracy double not null,\
-           score int not null,\
-           updated_at datetime default current_timestamp on update current_timestamp,\
-           primary key (player_id),\
-           foreign key (player_id) references players(id)\
-        )', log('recordsテーブルを作成')
+        'create table sentences (\
+            id int unsigned not null primary key auto_increment,\
+            sentence varchar(64) not null,\
+            kana varchar(64) not null\
+        )', log('sentencesテーブルを作成')
     )
 }
 const setupExpress = (express, con) => {
