@@ -38,6 +38,7 @@ const setupExpress = (express, con) => {
     express.use(bodyParser.json())
 
     express.use('/api', require('./routes/api')(con))
+    express.use('/', require('./routes/view'))
 
     const server = http.createServer(express)
     const port = process.env.PORT || 3000

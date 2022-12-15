@@ -1,0 +1,22 @@
+extends index
+
+block content
+  h3 ランキング
+  table.table
+    thead
+      tr
+        th プレイヤー名
+        th スコア
+        th キー/秒
+        th ミス数
+        th 正確率 (%)
+        th 更新日時
+    tbody
+      each item in data
+        tr
+          td= item.name
+          td= item.score
+          td= item.kps
+          td= item.miss
+          td= item.accuracy
+          td= item.updated_at
