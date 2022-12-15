@@ -1,3 +1,14 @@
+const express = require('express')
+const mysql = require('mysql2')
+const config = require('config')
+const path = require('path');
+const http = require('http')
+const cors = require('cors')
+const bodyParser = require('body-parser')
+const cookieParser = require('cookie-parser')
+
+const apiRouter = require('./routes/api')
+const viewRouter = require('./routes/view')
 const connectToDatabase = con => con.connect(err => console.log(err ? `データベースに接続中にエラー：${err}` : "データベース接続完了"))
 const setupDatabase = con => {
     const log = msg => err => err ? {} : console.log(msg)
@@ -22,31 +33,26 @@ const setupDatabase = con => {
     )
 }
 const setupExpress = (express, con) => {
-    const path = require('path');
-    const http = require('http')
-    const cors = require('cors')
-    const bodyParser = require('body-parser')
     express.set('views', path.join(__dirname, 'views'))
     express.set('view engine', 'pug')
 
     express.use(cors({origin: "http://localhost:8080"}))
+
+    express.use(cookieParser())
 
     express.use(bodyParser.urlencoded({
         extended: true
     }))
     express.use(bodyParser.json())
 
-    express.use('/api', require('./routes/api')(con))
-    express.use('/', require('./routes/view'))
+    express.use('/api', apiRouter(con))
+    express.use('/', viewRouter)
 
     const server = http.createServer(express)
     const port = process.env.PORT || 3000
     server.listen(port)
 }
 const main = () => {
-    const express = require('express')
-    const mysql = require('mysql2')
-    const config = require('config')
     const app = express()
     const con = mysql.createConnection(config.get("db"))
     connectToDatabase(con)
