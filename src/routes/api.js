@@ -24,7 +24,7 @@ const postRecord = (con) => (req, res) => {
     const {name, kps, miss, accuracy, score} = req.body
     const session_id = getSessionId(req, res)
     execQuery(con, res, [session_id, name, kps, miss, accuracy, score])(
-        'insert into records (session_id, name, kps, miss, accuracy, score)\
+        'insert into records (id, name, kps, miss, accuracy, score)\
         values (?, ?, ?, ?, ?, ?)\
         on duplicate key update\
         name = if(score > values(score), name, values(name)),\

@@ -36,7 +36,10 @@ const setupExpress = (express, con) => {
     express.set('views', path.join(__dirname, 'views'))
     express.set('view engine', 'pug')
 
-    express.use(cors({origin: "http://localhost:8080"}))
+    express.use(cors({
+        origin: "http://localhost:8080",
+        credentials: true
+    }))
 
     express.use(cookieParser())
 
