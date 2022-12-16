@@ -37,7 +37,7 @@ const setupExpress = (express, con) => {
     express.set('view engine', 'pug')
 
     express.use(cors({
-        origin: "http://localhost:8080",
+        origin: config.get('game-host'),
         credentials: true
     }))
 
