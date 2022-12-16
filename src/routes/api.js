@@ -13,8 +13,8 @@ const getRanking = (con) => (req, res) =>
         order by score desc'
     )
 
-const getRecordById = (con) => (req, res) =>
-    execQuery(con, res, req.params.id)(
+const getOwnRecord = (con) => (req, res) =>
+    execQuery(con, res, getSessionId(req, res))(
         'select name, kps, miss, accuracy, score, updated_at\
         from records\
         where id = ?'
@@ -39,7 +39,7 @@ const createRouter = (con) => {
     const express = require('express')
     const router = express.Router()
     router.get('/ranking', getRanking(con))
-    router.get('/records/:id', getRecordById(con))
+    router.get('/records/me', getOwnRecord(con))
     router.post('/records/register', postRecord(con))
 
     return router
