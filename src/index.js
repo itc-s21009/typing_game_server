@@ -27,8 +27,8 @@ const setupDatabase = con => {
     con.query(
         'create table sentences (\
             id int unsigned not null primary key auto_increment,\
-            sentence varchar(64) not null,\
-            kana varchar(64) not null\
+            sentence varchar(64) not null unique,\
+            kana varchar(64) not null unique\
         )', log('sentencesテーブルを作成')
     )
 }
