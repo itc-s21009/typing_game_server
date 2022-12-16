@@ -8,14 +8,14 @@ const getSessionId = (req, res) => {
 const execQuery = (con, res, values) => sql => con.query(sql, values, (e, results) => e ? res.json({code: e.code}) : res.json(results))
 const getRanking = (con) => (req, res) =>
     execQuery(con, res)(
-        'select name, kps, miss, accuracy, score, updated_at\
+        'select rank() over(order by score desc) as place, name, kps, miss, accuracy, score, updated_at\
         from records\
         order by score desc'
     )
 
 const getOwnRecord = (con) => (req, res) =>
     execQuery(con, res, getSessionId(req, res))(
-        'select name, kps, miss, accuracy, score, updated_at\
+        'select rank() over(order by score desc) as place, name, kps, miss, accuracy, score, updated_at\
         from records\
         where id = ?'
     )

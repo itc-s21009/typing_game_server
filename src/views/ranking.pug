@@ -5,6 +5,7 @@ block content
   table.table
     thead
       tr
+        th 順位
         th プレイヤー名
         th スコア
         th キー/秒
@@ -14,6 +15,7 @@ block content
     tbody
       each item in data
         tr
+          td #{item.place}位
           td= item.name
           td= item.score
           td= item.kps
