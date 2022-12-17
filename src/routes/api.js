@@ -35,12 +35,23 @@ const postRecord = (con) => (req, res) => {
     )
 }
 
+const getSentence = (con) => (req, res) => {
+    const min = req.query.min ? req.query.min : 0
+    const max = req.query.max ? req.query.max : 64
+    execQuery(con, res, [min, max])(
+        'select * from sentences\
+        where char_length(kana) >= ? and char_length(kana) <= ?\
+        '
+    )
+}
+
 const createRouter = (con) => {
     const express = require('express')
     const router = express.Router()
     router.get('/ranking', getRanking(con))
     router.get('/records/me', getOwnRecord(con))
     router.post('/records/register', postRecord(con))
+    router.get('/sentences', getSentence(con))
 
     return router
 }
