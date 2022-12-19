@@ -1,0 +1,20 @@
+extends layout
+
+block content
+  h1 文章一覧
+  table
+    thead
+      tr
+        th 文章
+        th かな
+        th 削除
+        th 編集
+    tbody
+      each item in data
+        tr
+          td=item.sentence
+          td=item.kana
+          td
+            a(href=`/sentences/edit/${item.id}`) 編集
+          td
+            a(href=`/sentences/delete/${item.id}`) 削除

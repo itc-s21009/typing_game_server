@@ -31,6 +31,11 @@ const setupDatabase = con => {
             kana varchar(64) not null unique\
         )', log('sentencesテーブルを作成')
     )
+    con.query(
+        'create table admins (\
+            id varchar(256) not null primary key\
+        )', log('adminsテーブルを作成')
+    )
 }
 const setupExpress = (express, con) => {
     express.set('views', path.join(__dirname, 'views'))
