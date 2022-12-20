@@ -1,0 +1,15 @@
+extends layout
+
+block content
+  .container.w-50
+    h1.text-center 文章編集
+    form(method='post' action='/api/sentences/edit')
+      input#id(type='hidden' name='id' value=data[0].id)
+      .mb-3
+        label.form-label(for='sentence') 文章
+        input#sentence.form-control(type='text' name='sentence' value=data[0].sentence)
+      .mb-3
+        label.form-label(for='kana') かな
+        input#kana.form-control(type='text' name='kana' value=data[0].kana)
+      .mb-3.text-center
+        button.btn.btn-primary.w-50 更新

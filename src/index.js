@@ -31,36 +31,43 @@ const setupDatabase = con => {
             kana varchar(64) not null unique\
         )', log('sentencesテーブルを作成')
     )
+    con.query(
+        'create table admins (\
+            id varchar(256) not null primary key\
+        )', log('adminsテーブルを作成')
+    )
 }
-const setupExpress = (express, con) => {
-    express.set('views', path.join(__dirname, 'views'))
-    express.set('view engine', 'pug')
+const setupExpress = (con) => {
+    const app = express()
+    app.set('views', path.join(__dirname, 'views'))
+    app.set('view engine', 'pug')
 
-    express.use(cors({
+    app.use(cors({
         origin: config.get('game-host'),
         credentials: true
     }))
 
-    express.use(cookieParser())
+    app.use(cookieParser())
+    console.log(path.join(__dirname, 'public'))
+    app.use(express.static(path.join(__dirname, 'public')));
 
-    express.use(bodyParser.urlencoded({
+    app.use(bodyParser.urlencoded({
         extended: true
     }))
-    express.use(bodyParser.json())
+    app.use(bodyParser.json())
 
-    express.use('/api', apiRouter(con))
-    express.use('/', viewRouter)
+    app.use('/api', apiRouter(con))
+    app.use('/', viewRouter)
 
-    const server = http.createServer(express)
+    const server = http.createServer(app)
     const port = process.env.PORT || 3000
     server.listen(port)
 }
 const main = () => {
-    const app = express()
     const con = mysql.createConnection(config.get("db"))
     connectToDatabase(con)
     setupDatabase(con)
-    setupExpress(app, con)
+    setupExpress(con)
 
     module.exports = con
 }

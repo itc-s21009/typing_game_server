@@ -1,13 +1,32 @@
+const axios = require("axios");
+const render = (res, pug) => d => {
+    const data = d.data
+    data.error
+        ? res.render('error', {error: data.error})
+        : res.render(pug, {data: data})
+}
+
 const createRouter = () => {
     const express = require('express')
     const router = express.Router()
+    const api = axios.create({baseURL: 'http://localhost:3000/api'})
     router.get('/', async (req, res) => {
         res.render('index')
     })
     router.get('/ranking', (req, res) => {
-        fetch('http://localhost:3000/api/ranking')
-            .then(res => res.json())
-            .then(data => res.render('ranking', {data: data}))
+        api.get(`/ranking`)
+            .then(render(res, 'ranking'))
+    })
+    router.get('/sentences', (req, res) => {
+        api.get(`/sentences`, {headers: {Cookie: req.headers.cookie}})
+            .then(render(res, 'sentences'))
+    })
+    router.get('/sentences/edit/:id', (req, res) => {
+        api.get(`/sentences?id=${req.params.id}`, {headers: {Cookie: req.headers.cookie}})
+            .then(render(res, 'edit_sentence'))
+    })
+    router.get('/sentences/new', (req, res) => {
+        res.render('add_sentence')
     })
 
     return router
