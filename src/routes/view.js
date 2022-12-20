@@ -25,6 +25,9 @@ const createRouter = () => {
         api.get(`/sentences?id=${req.params.id}`, {headers: {Cookie: req.headers.cookie}})
             .then(render(res, 'edit_sentence'))
     })
+    router.get('/sentences/new', (req, res) => {
+        res.render('add_sentence')
+    })
 
     return router
 }

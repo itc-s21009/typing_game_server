@@ -1,7 +1,11 @@
 extends layout
 
 block content
-  h1 文章一覧
+  .d-flex.align-items-center.justify-content-between
+    h2
+    h2.text-center 文章一覧
+    a(href='/sentences/new')
+      btn.btn.btn-primary 文章追加
   table.table
     thead
       tr

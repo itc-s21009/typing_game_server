@@ -91,6 +91,18 @@ const deleteSentence = (con) => (req, res) => {
     )
 }
 
+const postSentence = (con) => (req, res) => {
+    const {sentence, kana} = req.body
+    con.query(
+        `insert
+         into sentences (sentence, kana)
+         values (?, ?)
+        `, [sentence, kana], () => {
+            res.render('add_sentence_complete', {sentence: sentence, kana: kana})
+        }
+    )
+}
+
 const createRouter = (con) => {
     const express = require('express')
     const router = express.Router()
@@ -98,8 +110,9 @@ const createRouter = (con) => {
     router.get('/records/me', checkAdmin(con), getOwnRecord(con))
     router.post('/records/register', postRecord(con))
     router.get('/sentences', checkAdmin(con), getSentence(con))
-    router.post('/sentences/edit', editSentence(con))
-    router.post('/sentences/delete', deleteSentence(con))
+    router.post('/sentences/edit', checkAdmin(con), editSentence(con))
+    router.post('/sentences/delete', checkAdmin(con), deleteSentence(con))
+    router.post('/sentences/register', checkAdmin(con), postSentence(con))
 
     return router
 }
