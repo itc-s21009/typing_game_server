@@ -1,14 +1,12 @@
 const express = require('express')
 const mysql = require('mysql2')
 const config = require('config')
-const path = require('path');
 const http = require('http')
 const cors = require('cors')
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 
-const apiRouter = require('./routes/api')
-const viewRouter = require('./routes/view')
+const apiRouter = require('./api')
 const connectToDatabase = con => con.connect(err => console.log(err ? `データベースに接続中にエラー：${err}` : "データベース接続完了"))
 const setupDatabase = con => {
     const log = msg => err => err ? {} : console.log(msg)
@@ -39,8 +37,6 @@ const setupDatabase = con => {
 }
 const setupExpress = (con) => {
     const app = express()
-    app.set('views', path.join(__dirname, 'views'))
-    app.set('view engine', 'pug')
 
     app.use(cors({
         origin: config.get('game-host'),
@@ -48,8 +44,6 @@ const setupExpress = (con) => {
     }))
 
     app.use(cookieParser())
-    console.log(path.join(__dirname, 'public'))
-    app.use(express.static(path.join(__dirname, 'public')));
 
     app.use(bodyParser.urlencoded({
         extended: true
@@ -57,7 +51,6 @@ const setupExpress = (con) => {
     app.use(bodyParser.json())
 
     app.use('/api', apiRouter(con))
-    app.use('/', viewRouter)
 
     const server = http.createServer(app)
     const port = process.env.PORT || 3000

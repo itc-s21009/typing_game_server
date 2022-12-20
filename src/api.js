@@ -73,21 +73,17 @@ const editSentence = (con) => (req, res) => {
          set sentence = ?,
              kana     = ?
          where id = ?
-        `, [sentence, kana, id], () => {
-            res.redirect('/sentences')
-        }
+        `, [sentence, kana, id], () => res.json({message: 'OK'})
     )
 }
 
 const deleteSentence = (con) => (req, res) => {
-    const {id, sentence, kana} = req.body
+    const {id} = req.body
     con.query(
         `delete
          from sentences
          where id = ?
-        `, id, () => {
-            res.render('delete_sentence_complete', {sentence: sentence, kana: kana})
-        }
+        `, id, () => res.json({message: 'OK'})
     )
 }
 
@@ -97,9 +93,7 @@ const postSentence = (con) => (req, res) => {
         `insert
          into sentences (sentence, kana)
          values (?, ?)
-        `, [sentence, kana], () => {
-            res.render('add_sentence_complete', {sentence: sentence, kana: kana})
-        }
+        `, [sentence, kana], () => res.json({message: 'OK'})
     )
 }
 
@@ -109,7 +103,7 @@ const createRouter = (con) => {
     router.get('/ranking', getRanking(con))
     router.get('/records/me', checkAdmin(con), getOwnRecord(con))
     router.post('/records/register', postRecord(con))
-    router.get('/sentences', checkAdmin(con), getSentence(con))
+    router.get('/sentences', getSentence(con))
     router.post('/sentences/edit', checkAdmin(con), editSentence(con))
     router.post('/sentences/delete', checkAdmin(con), deleteSentence(con))
     router.post('/sentences/register', checkAdmin(con), postSentence(con))
