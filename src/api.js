@@ -101,7 +101,7 @@ const createRouter = (con) => {
     const express = require('express')
     const router = express.Router()
     router.get('/ranking', getRanking(con))
-    router.get('/records/me', checkAdmin(con), getOwnRecord(con))
+    router.get('/records/me', getOwnRecord(con))
     router.post('/records/register', postRecord(con))
     router.get('/sentences', getSentence(con))
     router.post('/sentences/edit', checkAdmin(con), editSentence(con))
