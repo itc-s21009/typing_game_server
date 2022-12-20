@@ -2,7 +2,7 @@ extends layout
 
 block content
   h1 文章一覧
-  table
+  table.table
     thead
       tr
         th 文章
@@ -17,4 +17,5 @@ block content
           td
             a(href=`/sentences/edit/${item.id}`) 編集
           td
-            a(href=`/sentences/delete/${item.id}`) 削除
+            a.del-link(href='javascript:void(0)' data-id=item.id data-sentence=item.sentence data-kana=item.kana) 削除
+  script(src='/js/sentences.js')
