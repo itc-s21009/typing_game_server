@@ -5,18 +5,27 @@ const getSessionId = (req, res) => {
         res.cookie('session_id', sid = uid(24))
     return sid
 }
+const isAdmin = (con) => (req, res) =>
+    con.query(
+        `select *
+         from admins
+         where id = ?`
+        , getSessionId(req, res), (e, data) => {
+            res.json({admin: data.length > 0})
+        }
+    )
 const checkAdmin = (con) => (req, res, next) =>
     con.query(
         `select *
          from admins
          where id = ?`
         , getSessionId(req, res), (e, data) => {
-            data.length > 0 ? next() : res.json({error: 'No Permission.'})
+            data.length > 0 ? next() : res.end()
         }
     )
 const getRanking = (con) => (req, res) =>
     con.query(
-        `select rank() over(order by score desc) as place, name, kps, miss, accuracy, score, updated_at
+        `select rank() over (order by score desc) as place, name, kps, miss, accuracy, score, updated_at
          from records
          order by score desc`
         , (e, data) => {
@@ -26,7 +35,7 @@ const getRanking = (con) => (req, res) =>
 
 const getOwnRecord = (con) => (req, res) =>
     con.query(
-        `select rank() over(order by score desc) as place, name, kps, miss, accuracy, score, updated_at
+        `select rank() over (order by score desc) as place, name, kps, miss, accuracy, score, updated_at
          from records
          where id = ?`
         , getSessionId(req, res), (e, data) => {
@@ -40,13 +49,13 @@ const postRecord = (con) => (req, res) => {
     con.query(
         `insert
          into records(id, name, kps, miss, accuracy, score)
-         values (?, ?, ?, ?, ?, ?) on duplicate key
-        update
-            name = if (score > values (score), name, values (name)),
-            kps = if (score > values (score), kps, values (kps)),
-            miss = if (score > values (score), miss, values (miss)),
-            accuracy = if (score > values (score), accuracy, values (accuracy)),
-            score = if (score > values (score), score, values (score)) `
+         values (?, ?, ?, ?, ?, ?)
+         on duplicate key
+             update name     = if(score > values(score), name, values(name)),
+                    kps      = if(score > values(score), kps, values(kps)),
+                    miss     = if(score > values(score), miss, values(miss)),
+                    accuracy = if(score > values(score), accuracy, values(accuracy)),
+                    score    = if(score > values(score), score, values(score)) `
         , [session_id, name, kps, miss, accuracy, score], () => {
         }
     )
@@ -73,7 +82,7 @@ const editSentence = (con) => (req, res) => {
          set sentence = ?,
              kana     = ?
          where id = ?
-        `, [sentence, kana, id], () => res.json({message: 'OK'})
+        `, [sentence, kana, id], () => res.end()
     )
 }
 
@@ -83,7 +92,7 @@ const deleteSentence = (con) => (req, res) => {
         `delete
          from sentences
          where id = ?
-        `, id, () => res.json({message: 'OK'})
+        `, id, () => res.end()
     )
 }
 
@@ -93,7 +102,7 @@ const postSentence = (con) => (req, res) => {
         `insert
          into sentences (sentence, kana)
          values (?, ?)
-        `, [sentence, kana], () => res.json({message: 'OK'})
+        `, [sentence, kana], () => res.end()
     )
 }
 
@@ -103,10 +112,11 @@ const createRouter = (con) => {
     router.get('/ranking', getRanking(con))
     router.get('/records/me', getOwnRecord(con))
     router.post('/records/register', postRecord(con))
-    router.get('/sentences', getSentence(con))
+    router.get('/sentences', checkAdmin(con), getSentence(con))
     router.post('/sentences/edit', checkAdmin(con), editSentence(con))
     router.post('/sentences/delete', checkAdmin(con), deleteSentence(con))
     router.post('/sentences/register', checkAdmin(con), postSentence(con))
+    router.get('/testadmin', isAdmin(con))
 
     return router
 }
