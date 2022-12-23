@@ -56,8 +56,7 @@ const postRecord = (con) => (req, res) => {
                     miss     = if(score > values(score), miss, values(miss)),
                     accuracy = if(score > values(score), accuracy, values(accuracy)),
                     score    = if(score > values(score), score, values(score)) `
-        , [session_id, name, kps, miss, accuracy, score], () => {
-        }
+        , [session_id, name, kps, miss, accuracy, score], () => res.end()
     )
 }
 
