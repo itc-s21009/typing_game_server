@@ -5,6 +5,7 @@ const http = require('http')
 const cors = require('cors')
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
+export const SENTENCE_MAX_LENGTH = 64
 
 const apiRouter = require('./api')
 const connectToDatabase = con => con.connect(err => console.log(err ? `データベースに接続中にエラー：${err}` : "データベース接続完了"))
@@ -12,27 +13,30 @@ const setupDatabase = con => {
     const log = msg => err => err ? {} : console.log(msg)
     con.query('create database typing', log('データベースを作成'))
     con.query(
-        'create table records (\
-            id varchar(256) not null primary key,\
-            name varchar(16) not null,\
-            kps decimal(4, 1) unsigned not null,\
-            miss int unsigned not null,\
-            accuracy decimal(4, 1) unsigned not null check(accuracy <= 100.0),\
-            score int unsigned not null,\
-            updated_at datetime default current_timestamp on update current_timestamp\
-        )', log('recordsテーブルを作成')
+        `create table records
+         (
+             id         varchar(256)           not null primary key,
+             name       varchar(16)            not null,
+             kps        decimal(4, 1) unsigned not null,
+             miss       int unsigned           not null,
+             accuracy   decimal(4, 1) unsigned not null check (accuracy <= 100.0),
+             score      int unsigned           not null,
+             updated_at datetime default current_timestamp on update current_timestamp
+         )`, log('recordsテーブルを作成')
     )
     con.query(
-        'create table sentences (\
-            id int unsigned not null primary key auto_increment,\
-            sentence varchar(64) not null unique,\
-            kana varchar(64) not null unique\
-        )', log('sentencesテーブルを作成')
+        `create table sentences
+         (
+             id       int unsigned                    not null primary key auto_increment,
+             sentence varchar(${SENTENCE_MAX_LENGTH}) not null unique,
+             kana     varchar(${SENTENCE_MAX_LENGTH}) not null unique
+         )`, log('sentencesテーブルを作成')
     )
     con.query(
-        'create table admins (\
-            id varchar(256) not null primary key\
-        )', log('adminsテーブルを作成')
+        `create table admins
+         (
+             id varchar(256) not null primary key
+         )`, log('adminsテーブルを作成')
     )
 }
 const setupExpress = (con) => {

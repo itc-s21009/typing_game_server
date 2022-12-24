@@ -1,3 +1,4 @@
+const {SENTENCE_MAX_LENGTH} = require("./index");
 const uid = require('uid-safe').sync
 const getSessionId = (req, res) => {
     let sid = req.cookies['session_id']
@@ -62,7 +63,7 @@ const postRecord = (con) => (req, res) => {
 
 const getSentence = (con) => (req, res) => {
     const min = req.query.min ? req.query.min : 0
-    const max = req.query.max ? req.query.max : 64
+    const max = req.query.max ? req.query.max : SENTENCE_MAX_LENGTH
     con.query(
         `select *
          from sentences
