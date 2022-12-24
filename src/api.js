@@ -64,11 +64,14 @@ const postRecord = (req, res) => {
 const getSentence = (req, res) => {
     const min = req.query.min ? req.query.min : 0
     const max = req.query.max ? req.query.max : SENTENCE_MAX_LENGTH
+    const limit = Math.min(req.query.limit ? req.query.limit : 10, 50)
+    const q_id = req.query.id ? 'and id = ?' : ''
+    const q_offset_limit = req.query.page ? `limit ${limit} offset ${(req.query.page - 1) * limit}` : ''
     db.query(
         `select *
          from sentences
          where char_length(kana) >= ?
-           and char_length(kana) <= ? ${req.query.id ? 'and id = ?' : ''}`
+           and char_length(kana) <= ? ${q_id} ${q_offset_limit}`
         , [min, max, req.query.id], (e, data) => [
             res.json(data)
         ]
