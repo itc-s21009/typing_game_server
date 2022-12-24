@@ -5,11 +5,17 @@ const http = require('http')
 const cors = require('cors')
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
-export const SENTENCE_MAX_LENGTH = 64
 
-const apiRouter = require('./api')
-const connectToDatabase = con => con.connect(err => console.log(err ? `データベースに接続中にエラー：${err}` : "データベース接続完了"))
-const setupDatabase = con => {
+const SENTENCE_MAX_LENGTH = 64
+const con = mysql.createConnection(config.get("db"))
+
+module.exports = {
+    SENTENCE_MAX_LENGTH: SENTENCE_MAX_LENGTH,
+    db: con
+}
+
+const connectToDatabase = () => con.connect(err => console.log(err ? `データベースに接続中にエラー：${err}` : "データベース接続完了"))
+const setupDatabase = () => {
     const log = msg => err => err ? {} : console.log(msg)
     con.query('create database typing', log('データベースを作成'))
     con.query(
@@ -39,7 +45,7 @@ const setupDatabase = con => {
          )`, log('adminsテーブルを作成')
     )
 }
-const setupExpress = (con) => {
+const setupExpress = () => {
     const app = express()
 
     app.use(cors({
@@ -54,18 +60,16 @@ const setupExpress = (con) => {
     }))
     app.use(bodyParser.json())
 
-    app.use('/api', apiRouter(con))
+    const apiRouter = require('./api')
+    app.use('/api', apiRouter)
 
     const server = http.createServer(app)
     const port = process.env.PORT || 3000
     server.listen(port)
 }
 const main = () => {
-    const con = mysql.createConnection(config.get("db"))
-    connectToDatabase(con)
-    setupDatabase(con)
-    setupExpress(con)
-
-    module.exports = con
+    connectToDatabase()
+    setupDatabase()
+    setupExpress()
 }
 main()
