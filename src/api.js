@@ -1,3 +1,4 @@
+const {SENTENCE_MAX_LENGTH, db} = require("./index");
 const uid = require('uid-safe').sync
 const getSessionId = (req, res) => {
     let sid = req.cookies['session_id']
@@ -5,8 +6,8 @@ const getSessionId = (req, res) => {
         res.cookie('session_id', sid = uid(24))
     return sid
 }
-const isAdmin = (con) => (req, res) =>
-    con.query(
+const isAdmin = (req, res) =>
+    db.query(
         `select *
          from admins
          where id = ?`
@@ -14,8 +15,8 @@ const isAdmin = (con) => (req, res) =>
             res.json({admin: data.length > 0})
         }
     )
-const checkAdmin = (con) => (req, res, next) =>
-    con.query(
+const checkAdmin = (req, res, next) =>
+    db.query(
         `select *
          from admins
          where id = ?`
@@ -23,8 +24,8 @@ const checkAdmin = (con) => (req, res, next) =>
             data.length > 0 ? next() : res.end()
         }
     )
-const getRanking = (con) => (req, res) =>
-    con.query(
+const getRanking = (req, res) =>
+    db.query(
         `select rank() over (order by score desc) as place, name, kps, miss, accuracy, score, updated_at
          from records
          order by score desc`
@@ -33,8 +34,8 @@ const getRanking = (con) => (req, res) =>
         }
     )
 
-const getOwnRecord = (con) => (req, res) =>
-    con.query(
+const getOwnRecord = (req, res) =>
+    db.query(
         `select rank() over (order by score desc) as place, name, kps, miss, accuracy, score, updated_at
          from records
          where id = ?`
@@ -43,10 +44,10 @@ const getOwnRecord = (con) => (req, res) =>
         }
     )
 
-const postRecord = (con) => (req, res) => {
+const postRecord = (req, res) => {
     const {name, kps, miss, accuracy, score} = req.body
     const session_id = getSessionId(req, res)
-    con.query(
+    db.query(
         `insert
          into records(id, name, kps, miss, accuracy, score)
          values (?, ?, ?, ?, ?, ?)
@@ -56,28 +57,38 @@ const postRecord = (con) => (req, res) => {
                     miss     = if(score > values(score), miss, values(miss)),
                     accuracy = if(score > values(score), accuracy, values(accuracy)),
                     score    = if(score > values(score), score, values(score)) `
-        , [session_id, name, kps, miss, accuracy, score], () => {
-        }
+        , [session_id, name, kps, miss, accuracy, score], () => res.end()
     )
 }
 
-const getSentence = (con) => (req, res) => {
-    const min = req.query.min ? req.query.min : 0
-    const max = req.query.max ? req.query.max : 64
-    con.query(
+const getSentence = (req, res) => {
+    const min = db.escape(req.query.min ? req.query.min : 0)
+    const max = db.escape(req.query.max ? req.query.max : SENTENCE_MAX_LENGTH)
+    const limit = db.escape(Math.min(req.query.limit ? req.query.limit : 10, 50))
+    const order = req.query.order
+    const order_to_query = {
+        'new': 'id desc',
+        'old': 'id',
+        'short': 'length(kana)',
+        'long': 'length(kana) desc'
+    }
+    const q_id = req.query.id ? `and id = ${db.escape(req.query.id)}` : ''
+    const q_offset_limit = req.query.page ? `limit ${limit} offset ${(req.query.page - 1) * limit}` : ''
+    const q_order_column = order_to_query[order] ? `order by ${order_to_query[order]}` : ''
+    db.query(
         `select *
          from sentences
-         where char_length(kana) >= ?
-           and char_length(kana) <= ? ${req.query.id ? 'and id = ?' : ''}`
-        , [min, max, req.query.id], (e, data) => [
+         where char_length(kana) >= ${min}
+           and char_length(kana) <= ${max} ${q_id} ${q_order_column} ${q_offset_limit}`
+        , (e, data) => [
             res.json(data)
         ]
     )
 }
 
-const editSentence = (con) => (req, res) => {
+const editSentence = (req, res) => {
     const {id, sentence, kana} = req.body
-    con.query(
+    db.query(
         `update sentences
          set sentence = ?,
              kana     = ?
@@ -86,9 +97,9 @@ const editSentence = (con) => (req, res) => {
     )
 }
 
-const deleteSentence = (con) => (req, res) => {
+const deleteSentence = (req, res) => {
     const {id} = req.body
-    con.query(
+    db.query(
         `delete
          from sentences
          where id = ?
@@ -96,9 +107,9 @@ const deleteSentence = (con) => (req, res) => {
     )
 }
 
-const postSentence = (con) => (req, res) => {
+const postSentence = (req, res) => {
     const {sentence, kana} = req.body
-    con.query(
+    db.query(
         `insert
          into sentences (sentence, kana)
          values (?, ?)
@@ -106,18 +117,18 @@ const postSentence = (con) => (req, res) => {
     )
 }
 
-const createRouter = (con) => {
+const createRouter = () => {
     const express = require('express')
     const router = express.Router()
-    router.get('/ranking', getRanking(con))
-    router.get('/records/me', getOwnRecord(con))
-    router.post('/records/register', postRecord(con))
-    router.get('/sentences', checkAdmin(con), getSentence(con))
-    router.post('/sentences/edit', checkAdmin(con), editSentence(con))
-    router.post('/sentences/delete', checkAdmin(con), deleteSentence(con))
-    router.post('/sentences/register', checkAdmin(con), postSentence(con))
-    router.get('/testadmin', isAdmin(con))
+    router.get('/ranking', getRanking)
+    router.get('/records/me', getOwnRecord)
+    router.post('/records/register', postRecord)
+    router.get('/sentences', checkAdmin, getSentence)
+    router.post('/sentences/edit', checkAdmin, editSentence)
+    router.post('/sentences/delete', checkAdmin, deleteSentence)
+    router.post('/sentences/register', checkAdmin, postSentence)
+    router.get('/testadmin', isAdmin)
 
     return router
 }
-module.exports = createRouter
+module.exports = createRouter()
