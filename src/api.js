@@ -62,17 +62,25 @@ const postRecord = (req, res) => {
 }
 
 const getSentence = (req, res) => {
-    const min = req.query.min ? req.query.min : 0
-    const max = req.query.max ? req.query.max : SENTENCE_MAX_LENGTH
-    const limit = Math.min(req.query.limit ? req.query.limit : 10, 50)
-    const q_id = req.query.id ? 'and id = ?' : ''
+    const min = db.escape(req.query.min ? req.query.min : 0)
+    const max = db.escape(req.query.max ? req.query.max : SENTENCE_MAX_LENGTH)
+    const limit = db.escape(Math.min(req.query.limit ? req.query.limit : 10, 50))
+    const order = req.query.order
+    const order_to_query = {
+        'new': 'id desc',
+        'old': 'id',
+        'short': 'length(kana)',
+        'long': 'length(kana) desc'
+    }
+    const q_id = req.query.id ? `and id = ${db.escape(req.query.id)}` : ''
     const q_offset_limit = req.query.page ? `limit ${limit} offset ${(req.query.page - 1) * limit}` : ''
+    const q_order_column = order_to_query[order] ? `order by ${order_to_query[order]}` : ''
     db.query(
         `select *
          from sentences
-         where char_length(kana) >= ?
-           and char_length(kana) <= ? ${q_id} ${q_offset_limit}`
-        , [min, max, req.query.id], (e, data) => [
+         where char_length(kana) >= ${min}
+           and char_length(kana) <= ${max} ${q_id} ${q_order_column} ${q_offset_limit}`
+        , (e, data) => [
             res.json(data)
         ]
     )
