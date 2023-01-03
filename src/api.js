@@ -123,7 +123,7 @@ const createRouter = () => {
     router.get('/ranking', getRanking)
     router.get('/records/me', getOwnRecord)
     router.post('/records/register', postRecord)
-    router.get('/sentences', checkAdmin, getSentence)
+    router.get('/sentences', getSentence)
     router.post('/sentences/edit', checkAdmin, editSentence)
     router.post('/sentences/delete', checkAdmin, deleteSentence)
     router.post('/sentences/register', checkAdmin, postSentence)
