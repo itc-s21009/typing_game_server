@@ -36,8 +36,9 @@ const getRanking = (req, res) =>
 
 const getOwnRecord = (req, res) =>
     db.query(
-        `select rank() over (order by score desc) as place, name, kps, miss, accuracy, score, updated_at
-         from records
+        `select place, name, kps, miss, accuracy, score, updated_at
+         from (select rank() over (order by score desc) as place, id, name, kps, miss, accuracy, score, updated_at
+               from records) as me
          where id = ?`
         , getSessionId(req, res), (e, data) => {
             res.json(data)
