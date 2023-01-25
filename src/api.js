@@ -14,28 +14,23 @@ const isAdmin = (req, res) =>
         `select *
          from admins
          where id = ?`
-        , getSessionId(req, res), (e, data) => {
-            res.json({admin: data.length > 0})
-        }
-    )
+        , getSessionId(req, res)
+    ).then(([data, _]) => res.json({admin: data.length > 0}))
+
 const checkAdmin = (req, res, next) =>
     db.query(
         `select *
          from admins
          where id = ?`
-        , getSessionId(req, res), (e, data) => {
-            data.length > 0 ? next() : res.end()
-        }
-    )
+        , getSessionId(req, res)
+    ).then(([data, _]) => data.length > 0 ? next() : res.end())
+
 const getRanking = (req, res) =>
     db.query(
         `select rank() over (order by score desc) as place, name, kps, miss, accuracy, score, updated_at
          from records
          order by score desc`
-        , (e, data) => {
-            res.json(data)
-        }
-    )
+    ).then(([data, _]) => res.json(data))
 
 const getOwnRecord = (req, res) =>
     db.query(
@@ -50,10 +45,8 @@ const getOwnRecord = (req, res) =>
                       updated_at
                from records) as me
          where id = ?`
-        , getSessionId(req, res), (e, data) => {
-            res.json(data)
-        }
-    )
+        , getSessionId(req, res)
+    ).then(([data, _]) => res.json(data))
 
 const postRecord = (req, res) => {
     const {name, kps, miss, accuracy, score} = req.body
@@ -68,8 +61,8 @@ const postRecord = (req, res) => {
                     miss     = if(score > values(score), miss, values(miss)),
                     accuracy = if(score > values(score), accuracy, values(accuracy)),
                     score    = if(score > values(score), score, values(score)) `
-        , [session_id, name, kps, miss, accuracy, score], () => res.end()
-    )
+        , [session_id, name, kps, miss, accuracy, score]
+    ).then(() => res.end())
 }
 
 const getSentence = (req, res) => {
@@ -91,10 +84,7 @@ const getSentence = (req, res) => {
          from sentences
          where char_length(kana) >= ${min}
            and char_length(kana) <= ${max} ${q_id} ${q_order_column} ${q_offset_limit}`
-        , (e, data) => [
-            res.json(data)
-        ]
-    )
+    ).then(([data, _]) => res.json(data))
 }
 
 const editSentence = (req, res) => {
@@ -103,9 +93,9 @@ const editSentence = (req, res) => {
         `update sentences
          set sentence = ?,
              kana     = ?
-         where id = ?
-        `, [sentence, kana, id], () => res.end()
-    )
+         where id = ?`
+        , [sentence, kana, id]
+    ).then(() => res.end())
 }
 
 const deleteSentence = (req, res) => {
@@ -113,9 +103,8 @@ const deleteSentence = (req, res) => {
     db.query(
         `delete
          from sentences
-         where id = ?
-        `, id, () => res.end()
-    )
+         where id = ?`
+    ).then(id, () => res.end())
 }
 
 const postSentence = (req, res) => {
@@ -123,9 +112,8 @@ const postSentence = (req, res) => {
     db.query(
         `insert
          into sentences (sentence, kana)
-         values (?, ?)
-        `, [sentence, kana], () => res.end()
-    )
+         values (?, ?)`, [sentence, kana]
+    ).then(() => res.end())
 }
 
 const setupPassport = () => {
