@@ -41,7 +41,8 @@ const setupDatabase = () => {
     con.query(
         `create table admins
          (
-             id varchar(256) not null primary key
+             id       varchar(256) not null primary key,
+             password varchar(256) not null
          )`, log('adminsテーブルを作成')
     )
 }
