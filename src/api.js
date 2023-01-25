@@ -1,5 +1,8 @@
 const {SENTENCE_MAX_LENGTH, db} = require("./index");
+const passport = require("passport");
+const LocalStrategy = require("passport-local");
 const uid = require('uid-safe').sync
+const bcrypt = require('bcrypt')
 const getSessionId = (req, res) => {
     let sid = req.cookies['session_id']
     if (!sid)
@@ -37,7 +40,14 @@ const getRanking = (req, res) =>
 const getOwnRecord = (req, res) =>
     db.query(
         `select place, name, kps, miss, accuracy, score, updated_at
-         from (select rank() over (order by score desc) as place, id, name, kps, miss, accuracy, score, updated_at
+         from (select rank() over (order by score desc) as place,
+                      id,
+                      name,
+                      kps,
+                      miss,
+                      accuracy,
+                      score,
+                      updated_at
                from records) as me
          where id = ?`
         , getSessionId(req, res), (e, data) => {
@@ -118,7 +128,38 @@ const postSentence = (req, res) => {
     )
 }
 
+const setupPassport = () => {
+    passport.use(new LocalStrategy((username, password, callback) => {
+        db.query(
+            `select *
+             from admins
+             where id = ?`, [username]
+        ).then(([data, _]) => {
+            const userObj = data[0]
+            if (userObj) {
+                console.log(userObj)
+                const hashedPassword = userObj.password
+                if (bcrypt.compareSync(password, hashedPassword)) {
+                    return callback(null, data)
+                }
+            }
+            return callback(null, false)
+        })
+            .catch(e => callback(e))
+    }))
+    passport.deserializeUser((user, callback) => {
+        process.nextTick(() => {
+            console.log(user)
+            return callback(null, {id: user.id})
+        })
+    })
+    passport.serializeUser((user, callback) => {
+        process.nextTick(() => callback(null, user))
+    })
+}
+
 const createRouter = () => {
+    setupPassport()
     const express = require('express')
     const router = express.Router()
     router.get('/ranking', getRanking)
@@ -129,6 +170,7 @@ const createRouter = () => {
     router.post('/sentences/delete', checkAdmin, deleteSentence)
     router.post('/sentences/register', checkAdmin, postSentence)
     router.get('/testadmin', isAdmin)
+    router.post('/login', passport.authenticate('local', {successRedirect: '/', failureRedirect: '/login'}))
 
     return router
 }
