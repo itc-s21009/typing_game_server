@@ -123,7 +123,6 @@ const tryLogin = (req, res) => {
     ).then(([data, _]) => {
         const userObj = data[0]
         if (userObj) {
-            console.log(userObj)
             const hashedPassword = userObj.password
             res.json({success: bcrypt.compareSync(password, hashedPassword)})
         } else {
