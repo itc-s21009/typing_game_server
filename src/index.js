@@ -1,6 +1,4 @@
 const express = require('express')
-const session = require('express-session')
-const MySQLStore = require('express-mysql-session')(session)
 const mysql = require('mysql2')
 const config = require('config')
 const http = require('http')
@@ -61,13 +59,6 @@ const setupExpress = () => {
         extended: true
     }))
     app.use(bodyParser.json())
-
-    app.use(session({
-        secret: config.get('secret'),
-        resave: false,
-        saveUninitialized: false,
-        store: new MySQLStore({}, con)
-    }))
 
     const apiRouter = require('./api')
     app.use('/api', apiRouter)

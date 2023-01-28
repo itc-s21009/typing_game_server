@@ -1,6 +1,4 @@
 const {SENTENCE_MAX_LENGTH, db} = require("./index");
-const passport = require("passport");
-const LocalStrategy = require("passport-local");
 const uid = require('uid-safe').sync
 const bcrypt = require('bcrypt')
 const getSessionId = (req, res) => {
