@@ -116,38 +116,25 @@ const postSentence = (req, res) => {
     ).then(() => res.end())
 }
 
-const setupPassport = () => {
-    passport.use(new LocalStrategy((username, password, callback) => {
-        db.query(
-            `select *
-             from admins
-             where id = ?`, [username]
-        ).then(([data, _]) => {
-            const userObj = data[0]
-            if (userObj) {
-                console.log(userObj)
-                const hashedPassword = userObj.password
-                if (bcrypt.compareSync(password, hashedPassword)) {
-                    return callback(null, data)
-                }
-            }
-            return callback(null, false)
-        })
-            .catch(e => callback(e))
-    }))
-    passport.deserializeUser((user, callback) => {
-        process.nextTick(() => {
-            console.log(user)
-            return callback(null, {id: user.id})
-        })
-    })
-    passport.serializeUser((user, callback) => {
-        process.nextTick(() => callback(null, user))
+const tryLogin = (req, res) => {
+    const {username, password} = req.body
+    db.query(
+        `select *
+         from admins
+         where id = ?`, [username]
+    ).then(([data, _]) => {
+        const userObj = data[0]
+        if (userObj) {
+            console.log(userObj)
+            const hashedPassword = userObj.password
+            res.json({success: bcrypt.compareSync(password, hashedPassword)})
+        } else {
+            res.json({success: false})
+        }
     })
 }
 
 const createRouter = () => {
-    setupPassport()
     const express = require('express')
     const router = express.Router()
     router.get('/ranking', getRanking)
@@ -158,7 +145,7 @@ const createRouter = () => {
     router.post('/sentences/delete', checkAdmin, deleteSentence)
     router.post('/sentences/register', checkAdmin, postSentence)
     router.get('/testadmin', isAdmin)
-    router.post('/login', passport.authenticate('local', {successRedirect: '/', failureRedirect: '/login'}))
+    router.post('/login', tryLogin)
 
     return router
 }
