@@ -112,6 +112,12 @@ const postSentence = (req, res) => {
          into sentences (sentence, kana)
          values (?, ?)`, [sentence, kana]
     ).then(() => res.end())
+        .catch((e) => {
+            if (e.code === 'ER_DUP_ENTRY') {
+                console.log(e.sqlMessage)
+            }
+            res.end()
+        })
 }
 
 const tryLogin = (req, res) => {
