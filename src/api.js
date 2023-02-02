@@ -102,7 +102,8 @@ const deleteSentence = (req, res) => {
         `delete
          from sentences
          where id = ?`
-    ).then(id, () => res.end())
+        , [id]
+    ).then(() => res.end())
 }
 
 const postSentence = (req, res) => {
