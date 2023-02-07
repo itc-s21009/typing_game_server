@@ -144,6 +144,29 @@ const tryLogin = (req, res) => {
     })
 }
 
+const setUsername = (req, res) => {
+    const {id, password, newUsername} = req.body
+    db.query(
+        `select *
+         from admins
+         where id = ?`, [id]
+    ).then(([data, _]) => {
+        const userObj = data[0]
+        if (userObj && bcrypt.compareSync(password, userObj.password)) {
+            db.query(
+                `update admins
+                 set username = ?
+                 where id = ?
+                `, [newUsername, id]
+            ).then(() => {
+                res.json({success: true})
+            })
+        } else {
+            res.json({success: false})
+        }
+    })
+}
+
 const createRouter = () => {
     const express = require('express')
     const router = express.Router()
@@ -151,9 +174,10 @@ const createRouter = () => {
     router.get('/records/me', getOwnRecord)
     router.post('/records/register', postRecord)
     router.get('/sentences', getSentence)
-    router.post('/sentences/edit', checkAdmin, editSentence)
-    router.post('/sentences/delete', checkAdmin, deleteSentence)
-    router.post('/sentences/register', checkAdmin, postSentence)
+    router.post('/sentences/edit', editSentence)
+    router.post('/sentences/delete', deleteSentence)
+    router.post('/sentences/register', postSentence)
+    router.post('/settings/username', setUsername)
     router.get('/testadmin', isAdmin)
     router.post('/login', tryLogin)
 
