@@ -166,6 +166,29 @@ const setUsername = (req, res) => {
         }
     })
 }
+const setPassword = (req, res) => {
+    const {id, password, newPassword} = req.body
+    db.query(
+        `select *
+         from admins
+         where id = ?`, [id]
+    ).then(([data, _]) => {
+        const userObj = data[0]
+        if (userObj && bcrypt.compareSync(password, userObj.password)) {
+            const newHash = bcrypt.hashSync(newPassword, 10)
+            db.query(
+                `update admins
+                 set password = ?
+                 where id = ?
+                `, [newHash, id]
+            ).then(() => {
+                res.json({success: true})
+            })
+        } else {
+            res.json({success: false})
+        }
+    })
+}
 
 const createRouter = () => {
     const express = require('express')
@@ -178,6 +201,7 @@ const createRouter = () => {
     router.post('/sentences/delete', deleteSentence)
     router.post('/sentences/register', postSentence)
     router.post('/settings/username', setUsername)
+    router.post('/settings/password', setPassword)
     router.get('/testadmin', isAdmin)
     router.post('/login', tryLogin)
 
