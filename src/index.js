@@ -41,6 +41,7 @@ const setupDatabase = () => {
         `create table if not exists admins
          (
              id       varchar(256) not null primary key,
+             username varchar(256) not null,
              password varchar(256) not null
          )`
     ).then(log('adminsテーブルを作成'))

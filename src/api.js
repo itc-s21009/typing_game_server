@@ -122,11 +122,11 @@ const postSentence = (req, res) => {
 }
 
 const tryLogin = (req, res) => {
-    const {username, password} = req.body
+    const {id, password} = req.body
     db.query(
         `select *
          from admins
-         where id = ?`, [username]
+         where id = ?`, [id]
     ).then(([data, _]) => {
         const userObj = data[0]
         if (userObj) {
