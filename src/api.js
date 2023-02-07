@@ -102,7 +102,8 @@ const deleteSentence = (req, res) => {
         `delete
          from sentences
          where id = ?`
-    ).then(id, () => res.end())
+        , [id]
+    ).then(() => res.end())
 }
 
 const postSentence = (req, res) => {
@@ -112,19 +113,77 @@ const postSentence = (req, res) => {
          into sentences (sentence, kana)
          values (?, ?)`, [sentence, kana]
     ).then(() => res.end())
+        .catch((e) => {
+            if (e.code === 'ER_DUP_ENTRY') {
+                console.log(e.sqlMessage)
+            }
+            res.end()
+        })
 }
 
 const tryLogin = (req, res) => {
-    const {username, password} = req.body
+    const {id, password} = req.body
     db.query(
         `select *
          from admins
-         where id = ?`, [username]
+         where id = ?`, [id]
     ).then(([data, _]) => {
         const userObj = data[0]
         if (userObj) {
             const hashedPassword = userObj.password
-            res.json({success: bcrypt.compareSync(password, hashedPassword)})
+            const success = bcrypt.compareSync(password, hashedPassword)
+            if (success) {
+                return res.json({
+                    success: true,
+                    id: userObj.id,
+                    username: userObj.username
+                })
+            }
+        }
+        return res.json({success: false})
+    })
+}
+
+const setUsername = (req, res) => {
+    const {id, password, newUsername} = req.body
+    db.query(
+        `select *
+         from admins
+         where id = ?`, [id]
+    ).then(([data, _]) => {
+        const userObj = data[0]
+        if (userObj && bcrypt.compareSync(password, userObj.password)) {
+            db.query(
+                `update admins
+                 set username = ?
+                 where id = ?
+                `, [newUsername, id]
+            ).then(() => {
+                res.json({success: true})
+            })
+        } else {
+            res.json({success: false})
+        }
+    })
+}
+const setPassword = (req, res) => {
+    const {id, password, newPassword} = req.body
+    db.query(
+        `select *
+         from admins
+         where id = ?`, [id]
+    ).then(([data, _]) => {
+        const userObj = data[0]
+        if (userObj && bcrypt.compareSync(password, userObj.password)) {
+            const newHash = bcrypt.hashSync(newPassword, 10)
+            db.query(
+                `update admins
+                 set password = ?
+                 where id = ?
+                `, [newHash, id]
+            ).then(() => {
+                res.json({success: true})
+            })
         } else {
             res.json({success: false})
         }
@@ -138,9 +197,11 @@ const createRouter = () => {
     router.get('/records/me', getOwnRecord)
     router.post('/records/register', postRecord)
     router.get('/sentences', getSentence)
-    router.post('/sentences/edit', checkAdmin, editSentence)
-    router.post('/sentences/delete', checkAdmin, deleteSentence)
-    router.post('/sentences/register', checkAdmin, postSentence)
+    router.post('/sentences/edit', editSentence)
+    router.post('/sentences/delete', deleteSentence)
+    router.post('/sentences/register', postSentence)
+    router.post('/settings/username', setUsername)
+    router.post('/settings/password', setPassword)
     router.get('/testadmin', isAdmin)
     router.post('/login', tryLogin)
 
