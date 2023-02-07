@@ -131,10 +131,16 @@ const tryLogin = (req, res) => {
         const userObj = data[0]
         if (userObj) {
             const hashedPassword = userObj.password
-            res.json({success: bcrypt.compareSync(password, hashedPassword)})
-        } else {
-            res.json({success: false})
+            const success = bcrypt.compareSync(password, hashedPassword)
+            if (success) {
+                return res.json({
+                    success: true,
+                    id: userObj.id,
+                    username: userObj.username
+                })
+            }
         }
+        return res.json({success: false})
     })
 }
 
