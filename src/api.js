@@ -1,28 +1,13 @@
 const {SENTENCE_MAX_LENGTH, db} = require("./index");
 const uid = require('uid-safe').sync
 const bcrypt = require('bcrypt')
+const passport = require("passport");
 const getSessionId = (req, res) => {
     let sid = req.cookies['session_id']
     if (!sid)
         res.cookie('session_id', sid = uid(24))
     return sid
 }
-const isAdmin = (req, res) =>
-    db.query(
-        `select *
-         from admins
-         where id = ?`
-        , getSessionId(req, res)
-    ).then(([data, _]) => res.json({admin: data.length > 0}))
-
-const checkAdmin = (req, res, next) =>
-    db.query(
-        `select *
-         from admins
-         where id = ?`
-        , getSessionId(req, res)
-    ).then(([data, _]) => data.length > 0 ? next() : res.end())
-
 const getRanking = (req, res) =>
     db.query(
         `select rank() over (order by score desc) as place, name, kps, miss, accuracy, score, updated_at
@@ -121,29 +106,6 @@ const postSentence = (req, res) => {
         })
 }
 
-const tryLogin = (req, res) => {
-    const {id, password} = req.body
-    db.query(
-        `select *
-         from admins
-         where id = ?`, [id]
-    ).then(([data, _]) => {
-        const userObj = data[0]
-        if (userObj) {
-            const hashedPassword = userObj.password
-            const success = bcrypt.compareSync(password, hashedPassword)
-            if (success) {
-                return res.json({
-                    success: true,
-                    id: userObj.id,
-                    username: userObj.username
-                })
-            }
-        }
-        return res.json({success: false})
-    })
-}
-
 const setUsername = (req, res) => {
     const {id, password, newUsername} = req.body
     db.query(
@@ -190,20 +152,30 @@ const setPassword = (req, res) => {
     })
 }
 
+const Auth = passport.authenticate('jwt', {session: false})
+
 const createRouter = () => {
     const express = require('express')
     const router = express.Router()
+    const passport = require('passport')
+    const jwt = require('jsonwebtoken')
     router.get('/ranking', getRanking)
     router.get('/records/me', getOwnRecord)
     router.post('/records/register', postRecord)
     router.get('/sentences', getSentence)
-    router.post('/sentences/edit', editSentence)
-    router.post('/sentences/delete', deleteSentence)
-    router.post('/sentences/register', postSentence)
-    router.post('/settings/username', setUsername)
-    router.post('/settings/password', setPassword)
-    router.get('/testadmin', isAdmin)
-    router.post('/login', tryLogin)
+    router.post('/sentences/edit', Auth, editSentence)
+    router.post('/sentences/delete', Auth, deleteSentence)
+    router.post('/sentences/register', Auth, postSentence)
+    router.post('/settings/username', Auth, setUsername)
+    router.post('/settings/password', Auth, setPassword)
+    router.post('/login', passport.authenticate('local', {session: false}), (req, res) => {
+        const payload = {id: req.user.id}
+        const token = jwt.sign(payload, process.env.JWT_SECRET)
+        res.status(200).json({
+            ...req.user,
+            token: token
+        })
+    })
 
     return router
 }
