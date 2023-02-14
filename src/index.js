@@ -5,6 +5,9 @@ const http = require('http')
 const cors = require('cors')
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
+const passport = require('passport')
+const bcrypt = require("bcrypt");
+require('dotenv').config()
 
 const SENTENCE_MAX_LENGTH = 64
 const con = mysql.createConnection(config.get("db")).promise()
@@ -68,11 +71,49 @@ const setupExpress = () => {
     const port = process.env.PORT || 3000
     server.listen(port)
 }
+const setupPassport = () => {
+    const LocalStrategy = require('passport-local').Strategy
+    const passportJwt = require('passport-jwt')
+    const JwtStrategy = passportJwt.Strategy
+    const ExtractJwt = passportJwt.ExtractJwt
+    const opts = {}
+    opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken()
+    opts.secretOrKey = process.env.JWT_SECRET
+    passport.use(new LocalStrategy({
+        usernameField: 'id',
+        passwordField: 'password'
+    }, (username, password, done) => {
+        con.query(
+            `select *
+             from admins
+             where id = ?`, [username]
+        ).then(([data, _]) => {
+            const userObj = data[0]
+            if (userObj) {
+                const hashedPassword = userObj.password
+                const success = bcrypt.compareSync(password, hashedPassword)
+                if (success) {
+                    const {id, username} = userObj
+                    return done(null, {
+                        id: id,
+                        username: username
+                    })
+                }
+            }
+            return done(null, false)
+        })
+    }))
+    passport.use(new JwtStrategy(opts, (jwt_payload, done) => {
+        return done(null, jwt_payload)
+    }))
+
+}
 const main = () => {
     con.connect()
         .then(() => {
             console.log("データベース接続完了")
             setupDatabase()
+            setupPassport()
             setupExpress()
         })
         .catch((err) => console.log(`データベースに接続中にエラー：${err}`))
